@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Administrar Usuarios{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_usuarios.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="page-header">
+        <div class="header-left">
+            <a href="{{ url_for('admin_dashboard') }}" class="return-btn">
+                <i class="bi bi-arrow-left"></i>
+                Volver al Panel de Admin
+            </a>
+            <h1>Gestión de Usuarios</h1>
+            <span class="user-count">{{ usuarios.total }} usuarios</span>
+        </div>
+    </div>
+
+<form method="get" action="{{ url_for('admin_usuarios') }}">
+    <div class="filters-bar">
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input 
+                type="text" 
+                id="searchInput"
+                placeholder="Buscar usuarios..." 
+                name="search"
+                value="{{ search }}"
+            >
+            {% if search %}
+            <button class="clear-search">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            {% endif %}
+        </div>
+        <div class="filter-actions">
+            <select class="select-filter" name="role" id="roleFilter">
+                <option value="">Todos los roles</option>
+                <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Administradores</option>
+                <option value="user" {% if role_filter == 'user' %}selected{% endif %}>Usuarios</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+    </div>
+</form>
+
+<div class="table-container">
+    <table class="data-table" id="userTable">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Fecha registro</th>
+                <th>Último acceso</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usuario in usuarios.items %}
+            <tr>
+                <td>
+                    <div class="user-cell">
+                        <img src="{{ url_for('static', filename='uploads/' + (usuario.profile_image or 'default.png')) }}"
+                             alt="Imagen de perfil"
+                             class="rounded-circle me-1"
+                             style="width: 24px; height: 24px; object-fit: cover;">
+                        <span class="user-name">{{ usuario.username }}</span>
+                    </div>
+                </td>
+                <td>{{ usuario.email }}</td>
+                <td>
+                    <span class="badge {{ usuario.role }}">{{ usuario.role|title }}</span>
+                </td>
+                <td>{{ usuario.fecha_creacion.strftime('%d/%m/%Y') if usuario.fecha_creacion else 'No disponible' }}</td>
+                <td>{{ usuario.ultimo_login.strftime('%d/%m/%Y') if usuario.ultimo_login else 'Nunca' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+    
+
+    <div class="pagination-bar">
+        <span class="pagination-info">
+            Mostrando {{ usuarios.items|length }} de {{ total_usuarios }} usuarios
+        </span>
+        <div class="pagination">
+            {% if usuarios.has_prev %}
+                <a href="{{ url_for('admin_usuarios', page=usuarios.prev_num) }}" class="btn btn-icon">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            {% endif %}
+            
+            {% for num in usuarios.iter_pages() %}
+                {% if num %}
+                    <a href="{{ url_for('admin_usuarios', page=num) }}" 
+                       class="btn btn-icon {% if num == usuarios.page %}active{% endif %}">
+                        {{ num }}
+                    </a>
+                {% else %}
+                    <span class="pagination-ellipsis">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if usuarios.has_next %}
+                <a href="{{ url_for('admin_usuarios', page=usuarios.next_num) }}" class="btn btn-icon">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% for usuario in usuarios.items %}
+    <div class="modal fade" id="detailsModal{{ usuario.id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles del Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="user-details">
+                        <div class="detail-row">
+                            <span class="detail-label">ID:</span>
+                            <span class="detail-value">{{ usuario.id }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Usuario:</span>
+                            <span class="detail-value">{{ usuario.username }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value">{{ usuario.email }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Rol:</span>
+                            <span class="badge {{ usuario.role }}">{{ usuario.role|title }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Fecha registro:</span>
+                            <span class="detail-value">{{ usuario.fecha_creacion.strftime('%d/%m/%Y %H:%M:%S') if usuario.fecha_creacion else 'No disponible' }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Último acceso:</span>
+                            <span class="detail-value">{{ usuario.ultimo_login.strftime('%d/%m/%Y %H:%M:%S') if usuario.ultimo_login else 'Nunca' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="modal fade" id="editModal{{ usuario.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('editar_usuario', id=usuario.id) }}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Nombre de usuario</label>
+                        <input type="text" name="username" value="{{ usuario.username }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" value="{{ usuario.email }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Rol</label>
+                        <select name="role">
+                            <option value="user" {% if usuario.role == "user" %}selected{% endif %}>Usuario</option>
+                            <option value="admin" {% if usuario.role == "admin" %}selected{% endif %}>Administrador</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin_usuarios.js') }}"></script>
+{% endblock %}

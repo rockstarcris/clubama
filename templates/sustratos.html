@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-5" style="font-family: 'Poppins', sans-serif; font-weight: 600;">Sustratos</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for product in products %}
+            {% if product.category == 'sustratos' %}
+                <div class="col">
+                    <div class="card border-0 shadow-sm h-100">
+                        <img src="{{ url_for('static', filename='uploads/' + (product.image if product.image else 'default.jpg')) }}" class="card-img-top" alt="{{ product.name }}">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title text-success" style="font-family: 'Poppins', sans-serif; font-weight: 500;">{{ product.name }}</h5>
+                            <p class="card-text text-muted small" style="font-family: 'Poppins', sans-serif;">{{ product.description }}</p>
+                            <p class="text-success fw-bold" style="font-family: 'Poppins', sans-serif;"><strong>${{ "%.0f"|format(product.price) }} CLP</strong></p>
+                            <a href="#" class="btn btn-success btn-sm mt-auto" style="font-family: 'Poppins', sans-serif;">Ver Detalles</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .card-img-top {
+        height: 200px;
+        object-fit: cover;
+    }
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+        font-size: 0.9rem;
+    }
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+</style>
+{% endblock %}

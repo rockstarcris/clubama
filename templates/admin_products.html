@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_products.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-4">
+            <a href="{{ url_for('admin_dashboard') }}" 
+               class="btn btn-outline-primary rounded-3 px-4">
+                <i class="bi bi-arrow-left me-2"></i>Panel de Administrador
+            </a>
+            <h2 class="h3 fw-bold mb-0">Administrar Productos</h2>
+        </div>
+        <button type="button" 
+                class="btn btn-primary px-4" 
+                data-bs-toggle="modal" 
+                data-bs-target="#addProductModal">
+            <i class="bi bi-plus-lg me-2"></i>Agregar Producto
+        </button>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show rounded-3 mb-4" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="px-4 py-3">Producto</th>
+                            <th class="px-4 py-3">Descripción</th>
+                            <th class="px-4 py-3">Precio</th>
+                            <th class="px-4 py-3">Stock</th>
+                            <th class="px-4 py-3">Categoría</th>
+                            <th class="px-4 py-3 text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td class="px-4 py-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    {% if product.image %}
+                                        <img src="{{ url_for('static', filename='uploads/' + product.image) }}"
+                                             class="rounded-3 bg-light"
+                                             width="50"
+                                             height="50"
+                                             style="object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-3 bg-light d-flex align-items-center justify-content-center"
+                                             style="width: 50px; height: 50px;">
+                                            <i class="bi bi-image text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <span class="fw-medium">{{ product.name }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 description-cell">
+                                <div class="description-wrapper">
+                                    <span class="short-text text-muted">{{ product.description[:100] }}...</span>
+                                    <span class="full-text d-none text-muted">
+                                        {{ product.description|wordwrap(87, break_long_words=False)|replace('\n', '<br>')|safe }}
+                                    </span>
+                                    <button class="btn btn-link toggle-text p-0 text-primary">Ver más</button>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="fw-medium">${{ "%.0f"|format(product.price) }}</span>
+                                <small class="text-muted">CLP</small>
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if product.stock > 10 %}
+                                    <span class="badge bg-success-subtle text-success">{{ product.stock }} unidades</span>
+                                {% elif product.stock > 0 %}
+                                    <span class="badge bg-warning-subtle text-warning">{{ product.stock }} unidades</span>
+                                {% else %}
+                                    <span class="badge bg-danger-subtle text-danger">Sin stock</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="badge rounded-pill 
+                                    {% if product.category == 'planes' %}bg-primary-subtle text-primary
+                                    {% elif product.category == 'sustratos' %}bg-success-subtle text-success
+                                    {% else %}bg-warning-subtle text-warning{% endif %}">
+                                    {{ product.category|title }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-end">
+                                <button type="button" 
+                                        class="btn btn-light btn-sm me-2" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editProductModal{{ product.id }}">
+                                    <i class="bi bi-pencil me-1"></i>Editar
+                                </button>
+                                <form action="{{ url_for('delete_product', product_id=product.id) }}" 
+                                      method="POST" 
+                                      class="d-inline-block"
+                                      onsubmit="return confirm('¿Estás seguro de eliminar este producto?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="bi bi-trash me-1"></i>Eliminar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addProductModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Agregar Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('admin_products') }}" enctype="multipart/form-data">
+                        <div class="text-center mb-4">
+                            <div class="position-relative d-inline-block">
+                                <div class="rounded-4 bg-light d-flex align-items-center justify-content-center mb-3"
+                                     style="width: 150px; height: 150px;">
+                                    <img id="preview-add-image" 
+                                         src="#" 
+                                         class="rounded-4 w-100 h-100" 
+                                         style="object-fit: cover; display: none;">
+                                    <i id="placeholder-add-icon" class="bi bi-image fs-1 text-muted"></i>
+                                </div>
+                                <label for="add-image" 
+                                       class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0 d-flex align-items-center justify-content-center"
+                                       style="width: 35px; height: 35px;">
+                                    <i class="bi bi-camera"></i>
+                                </label>
+                                <input type="file" 
+                                       class="d-none" 
+                                       id="add-image" 
+                                       name="image" 
+                                       accept="image/*"
+                                       onchange="previewAddImage(this)">
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <label class="form-label text-muted small mb-2">NOMBRE DEL PRODUCTO</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="bi bi-tag text-primary"></i>
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control border-0 bg-light" 
+                                           name="name" 
+                                           required>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label text-muted small mb-2">DESCRIPCIÓN</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="bi bi-text-paragraph text-primary"></i>
+                                    </span>
+                                    <textarea class="form-control border-0 bg-light" 
+                                              name="description" 
+                                              rows="3" 
+                                              required></textarea>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small mb-2">PRECIO</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="bi bi-currency-dollar text-primary"></i>
+                                    </span>
+                                    <input type="number" 
+                                           step="0.01" 
+                                           class="form-control border-0 bg-light" 
+                                           name="price" 
+                                           required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small mb-2">STOCK</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="bi bi-box text-primary"></i>
+                                    </span>
+                                    <input type="number" 
+                                           class="form-control border-0 bg-light" 
+                                           name="stock" 
+                                           required>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label text-muted small mb-2">CATEGORÍA</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="bi bi-folder text-primary"></i>
+                                    </span>
+                                    <select class="form-select border-0 bg-light" 
+                                            name="category" 
+                                            required>
+                                        <option value="" disabled selected>Selecciona una categoría</option>
+                                        <option value="planes">Planes</option>
+                                        <option value="sustratos">Sustratos</option>
+                                        <option value="lombrices">Lombrices</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end mt-4">
+                            <button type="button" 
+                                    class="btn btn-light me-2" 
+                                    data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-plus-lg me-2"></i>Agregar Producto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% for product in products %}
+    <div class="modal fade" id="editProductModal{{ product.id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Editar Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" 
+                          action="{{ url_for('edit_product', product_id=product.id) }}" 
+                          enctype="multipart/form-data">
+                        <div class="text-center mb-4">
+                            <div class="position-relative d-inline-block">
+                                <div class="rounded-4 bg-light d-flex align-items-center justify-content-center mb-3"
+                                     style="width: 150px; height: 150px;">
+                                    {% if product.image %}
+                                        <img id="preview-edit-image-{{ product.id }}" 
+                                             src="{{ url_for('static', filename='uploads/' + product.image) }}" 
+                                             class="rounded-4 w-100 h-100" 
+                                             style="object-fit: cover;">
+                                    {% else %}
+                                        <img id="preview-edit-image-{{ product.id }}" 
+                                             src="#" 
+                                             class="rounded-4 w-100 h-100" 
+                                             style="object-fit: cover; display: none;">
+                                        <i id="placeholder-edit-icon-{{ product.id }}" 
+                                           class="bi bi-image fs-1 text-muted"></i>
+                                    {% endif %}
+                                </div>
+                                <label for="edit-image-{{ product.id }}" 
+                                       class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0 d-flex align-items-center justify-content-center"
+                                       style="width: 35px; height: 35px;">
+                                    <i class="bi bi-camera"></i>
+                                </label>
+                                <input type="file" 
+                                       class="d-none" 
+                                       id="edit-image-{{ product.id }}" 
+                                       name="image" 
+                                       accept="image/*"
+                                       onchange="previewEditImage(this,  product.id)">
+                            </div>
+                            {% if product.image %}
+                            <div class="form-check d-inline-flex align-items-center">
+                                <input type="checkbox" 
+                                       class="form-check-input me-2" 
+                                       id="removeImage{{ product.id }}" 
+                                       name="remove_image" 
+                                       value="1">
+                                <label class="form-check-label text-danger" 
+                                       for="removeImage{{ product.id }}">
+                                    <i class="bi bi-trash3 me-1"></i>Eliminar imagen actual
+                                </label>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <label class="form-label text-muted small mb-2">NOMBRE DEL PRODUCTO</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="bi bi-tag text-primary"></i>
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control border-0 bg-light" 
+                                           name="name" 
+                                           value="{{ product.name }}" 
+                                           required>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label text-muted small mb-2">DESCRIPCIÓN</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="bi bi-text-paragraph text-primary"></i>
+                                    </span>
+                                    <textarea class="form-control border-0 bg-light" 
+                                              name="description" 
+                                              rows="3" 
+                                              required>{{ product.description }}</textarea>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small mb-2">PRECIO</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="bi bi-currency-dollar text-primary"></i>
+                                    </span>
+                                    <input type="number" 
+                                           step="0.01" 
+                                           class="form-control border-0 bg-light" 
+                                           name="price" 
+                                           value="{{ product.price }}" 
+                                           required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small mb-2">STOCK</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="bi bi-box text-primary"></i>
+                                    </span>
+                                    <input type="number" 
+                                           class="form-control border-0 bg-light" 
+                                           name="stock" 
+                                           value="{{ product.stock }}" 
+                                           required>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label text-muted small mb-2">CATEGORÍA</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-0 bg-light">
+                                        <i class="bi bi-folder text-primary"></i>
+                                    </span>
+                                    <select class="form-select border-0 bg-light" 
+                                            name="category" 
+                                            required>
+                                        <option value="planes" {% if product.category == "planes" %}selected{% endif %}>
+                                            Planes
+                                        </option>
+                                        <option value="sustratos" {% if product.category == "sustratos" %}selected{% endif %}>
+                                            Sustratos
+                                        </option>
+                                        <option value="lombrices" {% if product.category == "lombrices" %}selected{% endif %}>
+                                            Lombrices
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end mt-4">
+                            <button type="button" 
+                                    class="btn btn-light me-2" 
+                                    data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-check-lg me-2"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin_products.js') }}"></script>
+{% endblock %}

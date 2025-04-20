@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Favoritos - CLUB AMA{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Mis Favoritos</h1>
+    
+    <div class="row g-4">
+        {% for favorite in favorites %}
+        <div class="col-md-4">
+            <div class="card h-100">
+                <img src="{{ url_for('static', filename='uploads/' + (favorite.product.image if favorite.product.image else 'default.jpg')) }}"
+                     class="card-img-top" alt="{{ favorite.product.name }}"
+                     style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ favorite.product.name }}</h5>
+                    <p class="card-text text-success fw-bold">
+                        ${{ "%.0f"|format(favorite.product.price) }} CLP
+                    </p>
+                    <div class="d-grid gap-2">
+                        <form action="{{ url_for('add_to_cart', product_id=favorite.product.id) }}" method="POST">
+                            <button class="btn btn-success w-100">Añadir al Carrito</button>
+                        </form>
+                        <button class="btn btn-outline-danger remove-favorite" 
+                                data-product-id="{{ favorite.product.id }}">
+                            Quitar de Favoritos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center">
+            <p>No tienes productos favoritos.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-success">
+                Explorar Productos
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.remove-favorite').forEach(button => {
+    button.addEventListener('click', function() {
+        const productId = this.dataset.productId;
+        fetch(`/add_to_favorites/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'removed') {
+                this.closest('.col-md-4').remove();
+                if (document.querySelectorAll('.col-md-4').length === 0) {
+                    location.reload();
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

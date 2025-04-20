@@ -1,0 +1,6 @@
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home7/losrocks/clubama"
+PassengerBaseURI "/"
+PassengerPython "/home7/losrocks/virtualenv/clubama/3.8/bin/python"
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+ErrorDocument 404 /index.html

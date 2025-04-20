@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Override any existing card styles */
+    .cart-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .cart-title {
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 28px;
+    }
+    
+    .cart-table {
+        width: 100%;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        background-color: white;
+        margin-bottom: 20px;
+    }
+    
+    .cart-table-header {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-bottom: 1px solid #dee2e6;
+        font-weight: bold;
+    }
+    
+    .cart-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+    
+    .cart-item-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        margin-right: 15px;
+    }
+    
+    .cart-item-details {
+        flex-grow: 1;
+    }
+    
+    .cart-item-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .cart-item-price {
+        color: #6c757d;
+        font-size: 14px;
+    }
+    
+    .cart-item-total {
+        font-weight: bold;
+        margin-left: 20px;
+        text-align: right;
+        min-width: 100px;
+    }
+    
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .quantity-btn {
+        width: 30px;
+        height: 30px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    
+    .quantity-input {
+        width: 40px;
+        height: 30px;
+        border: 1px solid #dee2e6;
+        text-align: center;
+        margin: 0 5px;
+    }
+    
+    .remove-btn {
+        color: #dc3545;
+        background: none;
+        border: none;
+        cursor: pointer;
+        margin-left: 15px;
+    }
+    
+    .continue-shopping {
+        display: inline-block;
+        padding: 8px 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        text-decoration: none;
+        color: #212529;
+    }
+    
+    .continue-shopping:hover {
+        background-color: #e9ecef;
+    }
+    
+    .order-summary {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        background-color: white;
+    }
+    
+    .order-summary-header {
+        background-color: #198754;
+        color: white;
+        padding: 15px;
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        font-weight: bold;
+    }
+    
+    .order-summary-body {
+        padding: 15px;
+    }
+    
+    .order-summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    
+    .order-summary-total {
+        font-weight: bold;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .checkout-btn {
+        width: 100%;
+        padding: 10px;
+        background-color: #198754;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 15px;
+    }
+    
+    .checkout-btn:hover {
+        background-color: #157347;
+    }
+    
+    .payment-methods {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .payment-methods-title {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+    
+    .payment-method-img {
+        height: 30px;
+        margin: 0 5px;
+    }
+</style>
+
+<div class="cart-container">
+    <h1 class="cart-title">Tu Carrito de Compras</h1>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="cart-table">
+                <div class="cart-table-header">
+                    Productos en tu carrito
+                </div>
+                
+                {% for item in cart_items %}
+                <div class="cart-item">
+                    <img src="{{ url_for('static', filename='uploads/' + (item.product.image if item.product.image else 'default.jpg')) }}" 
+                         alt="{{ item.product.name }}" 
+                         class="cart-item-image">
+                    
+                    <div class="cart-item-details">
+                        <div class="cart-item-title">{{ item.product.name }}</div>
+                        <div class="cart-item-price">Precio: ${{ "%.0f"|format(item.product.price) }} CLP</div>
+                        
+                        <div class="quantity-control">
+                            <button class="quantity-btn decrease-btn" data-cart-id="{{ item.id }}">-</button>
+                            <input type="text" class="quantity-input" id="quantity-{{ item.id }}" value="{{ item.quantity }}" readonly>
+                            <button class="quantity-btn increase-btn" data-cart-id="{{ item.id }}">+</button>
+                            
+                            <form action="{{ url_for('remove_from_cart', cart_id=item.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="remove-btn">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="cart-item-total">${{ "%.0f"|format(item.product.price * item.quantity) }} CLP</div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <a href="{{ url_for('index') }}" class="continue-shopping">
+                ← Seguir Comprando
+            </a>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="order-summary">
+                <div class="order-summary-header">
+                    Resumen del Pedido
+                </div>
+                
+                <div class="order-summary-body">
+                    <div class="order-summary-row">
+                        <span>Subtotal</span>
+                        <span>${{ "%.0f"|format(total) }} CLP</span>
+                    </div>
+                    
+                    <div class="order-summary-row">
+                        <span>Envío</span>
+                        <span class="text-success">Gratis</span>
+                    </div>
+                    
+                    <div class="order-summary-row order-summary-total">
+                        <span>Total</span>
+                        <span>${{ "%.0f"|format(total) }} CLP</span>
+                    </div>
+                    
+                    <form action="{{ url_for('checkout') }}" method="POST">
+                        <button type="submit" class="checkout-btn">Proceder al Pago</button>
+                    </form>
+                    
+                    <div class="payment-methods">
+                        <div class="payment-methods-title">Métodos de pago aceptados</div>
+                        <img src="{{ url_for('static', filename='img/Transferencia.png') }}" alt="Transferencia" class="payment-method-img">
+                        <img src="{{ url_for('static', filename='img/pago.png') }}" alt="Otros métodos de pago" class="payment-method-img">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle decrease button
+    document.querySelectorAll('.decrease-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const cartId = this.getAttribute('data-cart-id');
+            const inputElement = document.getElementById(`quantity-${cartId}`);
+            let currentValue = parseInt(inputElement.value);
+            
+            if (currentValue > 1) {
+                currentValue -= 1;
+                inputElement.value = currentValue;
+                updateCartQuantity(cartId, currentValue);
+            }
+        });
+    });
+    
+    // Handle increase button
+    document.querySelectorAll('.increase-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const cartId = this.getAttribute('data-cart-id');
+            const inputElement = document.getElementById(`quantity-${cartId}`);
+            let currentValue = parseInt(inputElement.value);
+            
+            if (currentValue < 99) {
+                currentValue += 1;
+                inputElement.value = currentValue;
+                updateCartQuantity(cartId, currentValue);
+            }
+        });
+    });
+    
+    function updateCartQuantity(cartId, quantity) {
+        fetch(`/update_cart/${cartId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ quantity: quantity })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error updating cart:', error);
+        });
+    }
+});
+</script>
+{% endblock %}
