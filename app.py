@@ -29,7 +29,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['MAX_IMAGE_SIZE'] = 2 * 1024 * 1024
 
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or '2imcealfsyxh'
+app.config['SECRET_KEY'] = '2imcealfsyxh'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://losrocks_clubama:2imcealfsyxh@165.140.71.65/losrocks_agricultural_store'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
